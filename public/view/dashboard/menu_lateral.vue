@@ -78,7 +78,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted } from 'vue';
-import { obterItensMenu, MenuLateralItem } from '../../src/app/dashboard/gerencia_menu_lateral';
+import { obterItensMenu, MenuLateralItem } from '../../../src/app/dashboard/gerencia_menu_lateral';
 
 export default defineComponent({
   name: 'MenuLateral',

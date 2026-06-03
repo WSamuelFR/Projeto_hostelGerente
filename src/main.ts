@@ -6,8 +6,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-declare var require: any;
-const { DatabaseSync } = require('node:sqlite');
+import { DatabaseSync } from 'node:sqlite';
 
 // Importa lógicas de banco
 import { inicializarBanco } from './database/banco';
@@ -27,7 +26,8 @@ import { deletarUsuario } from './app/usuario/deleta_usuario';
 import { efetuarLogin } from './app/login/gerencia_login';
 
 let mainWindow: BrowserWindow | null = null;
-let db: any = null;
+let db: DatabaseSync | null = null;
+
 
 // Resolve caminhos
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -116,8 +116,8 @@ function createWindow() {
   }
 
   // Carrega URL do Vite no modo dev, ou index.html na build
-  if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
+  if (isDev && process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));

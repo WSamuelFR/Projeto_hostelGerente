@@ -237,14 +237,10 @@ export const TABLES = [
 // SCHEMA completo consolidado
 export const SCHEMA = TABLES.join('\n\n');
 
-/**
- * Função utilitária para inicializar o banco de dados.
- * Aceita uma conexão de banco compatível com o método .run() ou .exec()
- */
-export async function inicializarBanco(db: { exec: (sql: string) => Promise<any> | any }): Promise<void> {
+export function inicializarBanco(db: { exec: (sql: string) => any }): void {
   // Ativa chaves estrangeiras
-  await db.exec(PRAGMA_FOREIGN_KEYS);
+  db.exec(PRAGMA_FOREIGN_KEYS);
   
   // Executa o schema completo
-  await db.exec(SCHEMA);
+  db.exec(SCHEMA);
 }

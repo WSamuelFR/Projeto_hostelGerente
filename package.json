@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Sistema de Gerenciamento de Hostel",
   "main": "dist-electron/main.js",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -17,7 +16,7 @@
   "devDependencies": {
     "@types/node": "^20.10.4",
     "@vitejs/plugin-vue": "^4.5.2",
-    "electron": "^28.1.0",
+    "electron": "^35.0.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.10",
     "vite-plugin-electron": "^0.15.4"
