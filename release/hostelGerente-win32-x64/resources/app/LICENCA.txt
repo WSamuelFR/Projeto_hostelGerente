@@ -1,0 +1,13 @@
+TERMOS DE LICENÇA DE USO DO SOFTWARE - hostelGerente
+
+Ao prosseguir com a instalação e utilização do software hostelGerente, você concorda com os seguintes termos e condições de uso de forma integral:
+
+1. CONCESSÃO DE LICENÇA: O hostelGerente concede a você uma licença de uso individual, pessoal, não exclusiva e temporária para executar o software em dispositivos eletrônicos compatíveis sob sua propriedade ou controle, exclusivamente para fins de gestão operacional de recepção, hospedagem e controle interno de hostel.
+
+2. SEGURANÇA E PRIVACIDADE: O hostelGerente é um aplicativo local, seguro e livre de softwares nocivos. Todos os dados operacionais são armazenados de forma off-line em seu próprio computador através de um banco de dados SQLite criptografado e seguro. O aplicativo não coleta, compartilha ou transmite suas informações operacionais para servidores externos.
+
+3. DIREITOS E RESTRIÇÕES: Todos os direitos de propriedade intelectual sobre o software hostelGerente pertencem aos seus respectivos criadores. É proibida a redistribuição comercial não autorizada, engenharia reversa do código compilado ou modificações maliciosas na estrutura de segurança da aplicação.
+
+4. LIMITAÇÃO DE RESPONSABILIDADE: O software é fornecido "no estado em que se encontra", com todas as garantias de funcionamento para as funções descritas em sua documentação. O hostelGerente não se responsabiliza por perdas de dados resultantes de mau uso do sistema, falhas de hardware ou exclusões acidentais feitas pelo usuário.
+
+Ao selecionar "Eu aceito os termos do contrato" e prosseguir com a instalação, você declara ciência e concordância de todos os termos acima.

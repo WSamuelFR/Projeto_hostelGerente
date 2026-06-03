@@ -1,0 +1,19 @@
+========================================================
+   hostelGerente - SISTEMA DE GESTÃO E HOSPEDAGEM
+========================================================
+
+O hostelGerente é uma ferramenta integrada desenvolvida em arquitetura moderna e segura para otimizar os fluxos operacionais de hostels e pousadas.
+
+Principais Recursos do Sistema:
+* Gestão e Cadastro de Quartos (simples, suítes, capacidade de leitos e fluxo de situações).
+* Cadastro Unificado de Hóspedes (validador de CPF e integração automática com a BrasilAPI para busca de dados cadastrais via CNPJ).
+* Controle de Check-in e Check-out (estadia ativa, ocupação de quartos, controle de acompanhantes adicionais e liberação automática de leitos pós-checkout para limpeza).
+* Segurança Local Integrada (banco de dados SQLite integrado e senhas criptografadas em hash).
+
+Tecnologias Utilizadas:
+- Electron (Nativo Desktop)
+- Vue 3 (Interface Gráfica Reativa)
+- Bootstrap 5 & Fontes Premium (Visual Agradável e Responsivo)
+- SQLite Nativo (Armazenamento de Dados Local e Seguro)
+
+Para mais informações e atualizações do código-fonte, consulte o repositório oficial do projeto.

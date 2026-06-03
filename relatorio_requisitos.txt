@@ -1,0 +1,357 @@
+================================================================================
+           RELATÓRIO DE REQUISITOS E DOCUMENTAÇÃO TÉCNICA - hostelGerente
+================================================================================
+
+Este relatório descreve de forma abrangente e detalhada os requisitos funcionais e
+não-funcionais, a modelagem de banco de dados, os controladores de backend e as
+integrações de APIs do sistema de gerenciamento hostelGerente.
+
+--------------------------------------------------------------------------------
+1. OBJETIVO DO SISTEMA
+--------------------------------------------------------------------------------
+O hostelGerente é uma aplicação desktop desenvolvida em Electron + Vue 3 + TypeScript
+com banco de dados SQLite local integrado. Seu propósito é centralizar e otimizar
+as operações de hostels e pousadas. O sistema permite controle detalhado de leitos
+e quartos, cadastro unificado de hóspedes (pessoas físicas e jurídicas) com
+integrações a APIs externas de consulta, controle de acessos de funcionários,
+autenticação com hash criptográfico e gerenciamento robusto de entrada e saída
+de hóspedes (Check-in e Check-out), mantendo operação estável mesmo offline.
+
+--------------------------------------------------------------------------------
+2. ESPECIFICAÇÃO DE REQUISITOS
+--------------------------------------------------------------------------------
+
+2.1. REQUISITOS FUNCIONAIS (RF)
+
+* RF-01 - Autenticação de Usuários: O sistema deve permitir que funcionários
+  efetuem login informando nome de usuário (username) e senha. O login deve
+  ser insensível a maiúsculas/minúsculas para o username.
+* RF-02 - Níveis de Acesso (RBAC): O sistema deve possuir controle de acessos
+  diferenciando os usuários entre os perfis 'admin' (acesso total às configurações,
+  exclusões e cadastros) e 'padrao' (acesso a recepção, cadastros e check-ins).
+* RF-03 - Cadastro de Quartos: O sistema deve permitir o registro, listagem,
+  atualização e exclusão de quartos. Cada quarto é identificado por um número
+  único, um modelo (simples ou suíte), capacidade de leitos e situação.
+* RF-04 - Controle de Situação do Quarto: As situações dos quartos devem ser
+  restritas a 'limpo', 'sujo' e 'manutenção'.
+* RF-05 - Cadastro de Hóspedes Pessoa Física (PF): O sistema deve cadastrar
+  hóspedes PF contendo: Nome Completo (padronizado em maiúsculas), RG, CPF,
+  Data de Nascimento, Telefone e E-mail.
+* RF-06 - Validação de CPF: O sistema deve validar matematicamente os CPFs no
+  cadastro e edição de hóspedes PF, impedindo números inválidos ou duplicados.
+* RF-07 - Cadastro de Hóspedes Pessoa Jurídica (PJ): O sistema deve cadastrar
+  hóspedes corporativos contendo: Razão Social (padronizada em maiúsculas),
+  Nome Fantasia, CNPJ, Data de Fundação, Telefone e E-mail.
+* RF-08 - Validação de CNPJ: O sistema deve validar a máscara e quantidade de
+  dígitos do CNPJ no cadastro e na edição, impedindo duplicidades.
+* RF-09 - Consulta Automática de CNPJ (Integração API): O sistema deve consumir
+  uma API externa pública para buscar os dados de CNPJ digitados pelo operador,
+  preenchendo Razão Social, Nome Fantasia, Telefone e E-mail de forma automática.
+* RF-10 - Registro de Check-in: O sistema deve permitir o registro de estadias
+  associando um hóspede principal a um quarto que esteja na situação 'limpo',
+  definindo a data e hora de entrada e o funcionário responsável.
+* RF-11 - Acompanhantes do Check-in: O check-in deve permitir a inclusão de um ou
+  mais acompanhantes adicionais, selecionados a partir de hóspedes já cadastrados
+  (PF ou PJ), garantindo consistência referencial.
+* RF-12 - Registro de Check-out: O sistema deve permitir o encerramento de estadias
+  ativas, registrando o horário atual de saída e alterando de forma automática a
+  situação do quarto para 'sujo' (necessidade de limpeza).
+* RF-13 - Prevenção de Exclusão de Quarto: O sistema deve bloquear a remoção de
+  qualquer quarto que possua registro de check-in ou reserva associado a ele.
+* RF-14 - Gestão de Funcionários: O sistema deve permitir o cadastro, listagem,
+  atualização e exclusão de funcionários, gerenciando simultaneamente seus
+  dados pessoais (tabela usuario) e credenciais de login (tabela login).
+
+2.2. REQUISITOS NÃO-FUNCIONAIS (RNF)
+
+* RNF-01 - Portabilidade Desktop: O sistema deve funcionar nativamente em
+  ambiente Windows x64 empacotado via instalador Inno Setup.
+* RNF-02 - Banco de Dados Local Integrado: O sistema deve armazenar seus dados
+  em arquivo SQLite local (`hostel_gerente.sqlite`), no diretório AppData do usuário,
+  eliminando a dependência obrigatória de conexões cloud para tarefas diárias.
+* RNF-03 - Isolamento e Segurança (IPC): O frontend (Vue 3) não deve possuir
+  acesso direto ao Node.js ou ao SQLite. Toda a comunicação deve ser feita por
+  meio de uma ponte segura usando `contextBridge` e eventos IPC específicos.
+* RNF-04 - Segurança de Senhas: As senhas dos usuários devem ser armazenadas
+  na tabela `login` em formato hash gerado pelo algoritmo Scrypt (nativo do Node.js)
+  com salt aleatório de alta entropia (16 bytes).
+* RNF-05 - Proteção de Acesso: A comparação de senhas durante a autenticação deve
+  utilizar comparação em tempo constante (`crypto.timingSafeEqual`) para evitar
+  ataques de temporização (timing attacks).
+* RNF-06 - Interface Responsiva e Fluida: A interface deve ser desenvolvida com
+  Bootstrap 5, suporte a micro-animações, tempo de carregamento instantâneo, e
+  suporte nativo a Tema Claro e Escuro persistido localmente.
+* RNF-07 - Consistência de Banco de Dados: O banco de dados SQLite deve operar
+  com chaves estrangeiras ativadas (`PRAGMA foreign_keys = ON`) para garantir que
+  exclusões e atualizações respeitem a integridade referencial.
+* RNF-08 - Transacionalidade: Operações críticas (como a criação simultânea de
+  usuário + credenciais + nível de acesso ou check-in + acompanhantes) devem ser
+  executadas sob transações explícitas (`BEGIN TRANSACTION` / `COMMIT`), com
+  mecanismo de `ROLLBACK` automático em caso de falha.
+
+--------------------------------------------------------------------------------
+3. ARQUITETURA E MODELAGEM DO BANCO DE DADOS (SQLite)
+--------------------------------------------------------------------------------
+
+O banco de dados SQLite é inicializado em "src/database/banco.ts" no diretório
+do usuário local (`C:\Users\<user>\AppData\Roaming\hostelgerente\database\`).
+O esquema ativo é composto por 10 tabelas relacionadas:
+
+1. `hospede_cpf`
+   Armazena os dados cadastrais das pessoas físicas.
+   - `id_hospede_pf` (INTEGER PRIMARY KEY AUTOINCREMENT): Identificador único da PF.
+   - `nome_completo` (TEXT NOT NULL): Nome completo em letras maiúsculas.
+   - `rg` (TEXT NULL): Registro Geral do hóspede.
+   - `cpf` (TEXT UNIQUE NOT NULL): Número do CPF (armazenado apenas os 11 dígitos numéricos).
+   - `data_nascimento` (TEXT NULL): Formato ISO YYYY-MM-DD.
+   - `telefone` (TEXT NULL) / `email` (TEXT NULL).
+
+2. `hospede_pj`
+   Armazena os dados cadastrais das pessoas jurídicas.
+   - `id_hospede_pj` (INTEGER PRIMARY KEY AUTOINCREMENT): Identificador único da PJ.
+   - `nome_fantasia` (TEXT NULL): Nome comercial/marca.
+   - `razao_social` (TEXT NOT NULL): Razão Social corporativa em letras maiúsculas.
+   - `cnpj` (TEXT UNIQUE NOT NULL): Número do CNPJ (armazenado apenas os 14 dígitos numéricos).
+   - `data_fundacao` (TEXT NULL): Formato ISO YYYY-MM-DD.
+   - `telefone` (TEXT NULL) / `email` (TEXT NULL).
+
+3. `hospedes`
+   Tabela de unificação/ligação. Permite que o ID de hóspede (`id_hospedes`) usado
+   em check-ins ou reservas aponte para um registro único, independente do tipo (PF/PJ).
+   - `id_hospedes` (INTEGER PRIMARY KEY AUTOINCREMENT): Identificador unificado do hóspede.
+   - `id_hospede_pf` (INTEGER NULL, FOREIGN KEY): Aponta para `hospede_cpf`.
+   - `id_hospede_pj` (INTEGER NULL, FOREIGN KEY): Aponta para `hospede_pj`.
+   - Restrição de Integridade:
+     * `FOREIGN KEY (id_hospede_pf) REFERENCES hospede_cpf(id_hospede_pf) ON DELETE CASCADE`
+     * `FOREIGN KEY (id_hospede_pj) REFERENCES hospede_pj(id_hospede_pj) ON DELETE CASCADE`
+     * `CHECK (id_hospede_pj IS NOT NULL OR id_hospede_pf IS NOT NULL)` (Garante que tenha pelo menos um tipo vinculado).
+
+4. `usuario`
+   Cadastro físico dos funcionários do estabelecimento.
+   - `id_usuario` (INTEGER PRIMARY KEY AUTOINCREMENT): ID interno do funcionário.
+   - `nome_completo` (TEXT NOT NULL): Nome completo em letras maiúsculas.
+   - `rg` (TEXT NULL) / `cpf` (TEXT UNIQUE NOT NULL) / `data_nascimento` (TEXT NULL).
+   - `telefone` (TEXT NULL) / `email` (TEXT NULL).
+
+5. `login`
+   Credenciais de autenticação vinculadas ao cadastro do funcionário.
+   - `id_login` (INTEGER PRIMARY KEY AUTOINCREMENT): ID interno da credencial.
+   - `id_usuario` (INTEGER UNIQUE NOT NULL, FOREIGN KEY): Referencia `usuario`.
+   - `nome_usuario` (TEXT UNIQUE NOT NULL): Nome de login (Username padronizado em maiúsculas).
+   - `senha` (TEXT NOT NULL): Hash criptográfico Scrypt contendo salt e hash (`salt:hash`).
+   - Restrição: `FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE`
+     (Se o funcionário for apagado, suas credenciais de login são apagadas instantaneamente).
+
+6. `nivel_acesso`
+   Atribuição de papel administrativo do funcionário (RBAC).
+   - `id_nivel_acesso` (INTEGER PRIMARY KEY AUTOINCREMENT).
+   - `id_login` (INTEGER NOT NULL, FOREIGN KEY): Referencia a credencial em `login`.
+   - `id_usuario` (INTEGER NOT NULL, FOREIGN KEY): Referencia o funcionário em `usuario`.
+   - `nivel` (TEXT NOT NULL CHECK(nivel IN ('admin', 'padrao'))): Nível restrito.
+   - Restrições:
+     * `FOREIGN KEY (id_login) REFERENCES login(id_login) ON DELETE CASCADE`
+     * `FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE`
+
+7. `quarto`
+   Armazena as acomodações do hostel.
+   - `id_quarto` (INTEGER PRIMARY KEY AUTOINCREMENT): ID interno da acomodação.
+   - `numero` (TEXT UNIQUE NOT NULL): Identificação visível (Ex: "101A", "SUÍTE 02").
+   - `modelo` (TEXT NOT NULL CHECK(modelo IN ('simples', 'suíte'))).
+   - `capacidade` (INTEGER NOT NULL): Capacidade de leitos disponíveis no quarto.
+   - `situacao` (TEXT NOT NULL CHECK(situacao IN ('limpo', 'sujo', 'manutenção'))).
+
+8. `checkin`
+   Controle histórico e de estadias ativas na pousada.
+   - `id_checkin` (INTEGER PRIMARY KEY AUTOINCREMENT).
+   - `id_hospedes` (INTEGER NOT NULL, FOREIGN KEY): Aponta para a tabela unificada `hospedes`.
+   - `id_quarto` (INTEGER NOT NULL, FOREIGN KEY): Aponta para o quarto reservado em `quarto`.
+   - `id_usuario` (INTEGER NOT NULL, FOREIGN KEY): Aponta para o funcionário responsável em `usuario`.
+   - `nome` (TEXT NOT NULL): Cópia estática do nome do hóspede no momento do check-in.
+   - `documento` (TEXT NOT NULL): Cópia estática do documento (CPF/CNPJ) no momento da entrada.
+   - `telefone` (TEXT NULL) / `email` (TEXT NULL).
+   - `data_hora_checkin` (TEXT NOT NULL): Data e hora da entrada (Formato `YYYY-MM-DD HH:MM:SS`).
+   - `data_hora_checkout` (TEXT NULL): Data e hora da saída (Formato `YYYY-MM-DD HH:MM:SS`, preenchida no checkout).
+   - `situacao` (TEXT NOT NULL CHECK(situacao IN ('ativo', 'encerrado'))).
+   - Restrições:
+     * `FOREIGN KEY (id_hospedes) REFERENCES hospedes(id_hospedes)`
+     * `FOREIGN KEY (id_quarto) REFERENCES quarto(id_quarto)`
+     * `FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)`
+
+9. `ocupantes_checkin`
+   Registra acompanhantes vinculados a um check-in principal (relação 1:N).
+   - `id_ocupantes_checkin` (INTEGER PRIMARY KEY AUTOINCREMENT).
+   - `id_checkin` (INTEGER NOT NULL, FOREIGN KEY): Vincula à estadia principal.
+   - `id_hospedes` (INTEGER NOT NULL, FOREIGN KEY): Referencia o hóspede adicional.
+   - `nome` (TEXT NOT NULL) / `documento` (TEXT NOT NULL) / `email` (TEXT NULL) / `telefone` (TEXT NULL).
+   - Restrições:
+     * `FOREIGN KEY (id_checkin) REFERENCES checkin(id_checkin) ON DELETE CASCADE`
+       (Se a estadia principal for excluída, os acompanhantes vinculados são excluídos juntos).
+     * `FOREIGN KEY (id_hospedes) REFERENCES hospedes(id_hospedes)`
+
+10. `reserva`
+    Reservas planejadas para quartos e leitos.
+    - `id_reserva` (INTEGER PRIMARY KEY AUTOINCREMENT).
+    - `id_hospedes` (INTEGER NOT NULL, FOREIGN KEY) / `id_quarto` (INTEGER NOT NULL, FOREIGN KEY).
+    - `id_usuario` (INTEGER NOT NULL, FOREIGN KEY): Funcionário criador da reserva.
+    - `nome` (TEXT NOT NULL) / `documento` (TEXT NOT NULL) / `telefone` (TEXT NULL) / `email` (TEXT NULL).
+    - `numero_ocupantes` (INTEGER NOT NULL DEFAULT 1).
+    - `data_reserva` (TEXT DEFAULT CURRENT_TIMESTAMP).
+    - `data_checkin` (TEXT NOT NULL) / `data_checkout` (TEXT NOT NULL).
+    - `usuario_responsavel` (TEXT NOT NULL): Nome em texto do funcionário.
+    - `data_processo` (TEXT DEFAULT CURRENT_TIMESTAMP).
+    - Restrições de chave estrangeira apontando para `hospedes`, `quarto` e `usuario`.
+
+* Limpeza automática no Startup: O arquivo `banco.ts` executa um comando em
+  bloco `DROP TABLE IF EXISTS` na inicialização para remover tabelas legadas
+  que não são mais utilizadas no fluxo do hostelGerente, otimizando o tamanho do
+  banco:
+  - `financeiro`, `pagamento_chekin`, `consumo_checkin`, `venda_balcao`, `produtos` e `logs`.
+
+--------------------------------------------------------------------------------
+4. EXPLICAÇÃO DO CÓDIGO FONTE (BACKEND CONTROLLERS)
+--------------------------------------------------------------------------------
+
+A lógica de dados e regras de negócio está dividida em módulos controladores em
+`src/app/`, rodando no Main Process (Node.js 22 nativo) do Electron:
+
+4.1. Módulo de Criptografia (`src/app/config/criptografia.ts`)
+- `gerarHashSenha(senha)`: Gera um salt de 16 bytes randômico usando a biblioteca
+  criptográfica segura `crypto` do Node.js. Aplica o algoritmo seguro `scryptSync`
+  gerando um hash de 64 bytes de comprimento. Salva no banco de dados como `${salt}:${hash}`.
+- `compararSenha(senha, hashSalvo)`: Separa o salt e o hash salvos. Gera o hash
+  da senha fornecida utilizando o mesmo salt e compara ambos de forma segura
+  usando `crypto.timingSafeEqual` para blindar o sistema contra Timing Attacks.
+
+4.2. Módulo de Cadastro de Hóspedes (`src/app/hospede/cadastro_hospede.ts`)
+- `validarCPF(cpf)`: Implementa o algoritmo de validação matemática oficial do CPF.
+  Remove caracteres não numéricos, verifica se todos os dígitos são iguais (inválido)
+  e efetua o cálculo dos dois dígitos verificadores baseando-se nos pesos de 10 a 2.
+- `validarCNPJ(cnpj)`: Filtra pontuações e valida se a string tem 14 dígitos.
+- `cadastrarHospede(db, input)`: Recebe os dados de cadastro e valida duplicidades
+  diretamente no SQLite. Se for do tipo 'PF', valida CPF e cria o registro na
+  tabela `hospede_cpf`. Se for 'PJ', valida CNPJ e cria na tabela `hospede_pj`.
+  Insere uma linha na tabela pivô unificadora `hospedes` vinculando ao ID recém-criado.
+  Tudo é executado sob transação manual (`BEGIN TRANSACTION` / `COMMIT`), com
+  `ROLLBACK` automático se qualquer comando falhar.
+
+4.3. Módulo de Gerenciamento e Atualização de Hóspedes (`src/app/hospede/update_hospede.ts`)
+- `listarHospedes(db)`: Consolida a lista alfabética de todos os hóspedes do banco
+  em uma única visualização. Faz um `LEFT JOIN` da tabela `hospedes` com as tabelas
+  `hospede_cpf` e `hospede_pj`, usando a função SQL `COALESCE` para expor o nome
+  correto e demais dados.
+- `atualizarHospede(db, input)`: Executa a sanitização dos dados informados, valida
+  matematicamente o documento editado e verifica se o CPF/CNPJ conflita com outro
+  registro existente no banco. Em seguida, roda o comando SQL `UPDATE` na tabela
+  correta (`hospede_cpf` ou `hospede_pj`).
+
+4.4. Módulo de Exclusão de Hóspedes (`src/app/hospede/deleta_hospede.ts`)
+- `deletarHospede(db, idHospedes)`: Encontra o registro na tabela pivô `hospedes`
+  para verificar se o hóspede a ser apagado é PF ou PJ. Abre uma transação e apaga
+  a ficha correspondente na tabela de origem (`hospede_cpf` ou `hospede_pj`) e
+  a linha unificada em `hospedes`.
+
+4.5. Módulo de Cadastro de Quartos (`src/app/quarto/cadastro_quarto.ts`)
+- `cadastrarQuarto(db, input)`: Valida se o número do quarto é exclusivo. Garante
+  que a capacidade seja de no mínimo 1 leito, e que a situação e o modelo estejam
+  em conformidade com as restrições declaradas. Salva o registro em `quarto`.
+
+4.6. Módulo de Edição e Listagem de Quartos (`src/app/quarto/update_quarto.ts`)
+- `listarQuartos(db)`: Consulta e retorna os quartos ordenados de forma crescente
+  pelo número.
+- `atualizarQuarto(db, input)`: Permite alterar dados como modelo, número e capacidade.
+  Bloqueia a mudança se outro quarto já utilizar o número de destino informado.
+
+4.7. Módulo de Exclusão de Quartos (`src/app/quarto/deleta_quarto.ts`)
+- `deletarQuarto(db, idQuarto)`: Implementa o requisito de integridade de quartos.
+  Antes de deletar, faz consultas em `checkin` e `reserva`. Se houver qualquer
+  histórico de estadia ou reserva futura indexado a esse ID de quarto, a exclusão
+  é rejeitada e uma mensagem de bloqueio é enviada ao frontend.
+
+4.8. Módulo de Registro de Check-in (`src/app/checkin/cadastro_checkin.ts`)
+- `cadastrarCheckin(db, input)`: Controla a entrada de estadias.
+  * Verifica se o quarto existe e se está com a situação cadastrada como `'limpo'`.
+  * Roda um `BEGIN TRANSACTION`.
+  * Insere o check-in na tabela `checkin` marcando a situação como `'ativo'`.
+  * Se o formulário contiver acompanhantes adicionais, itera sobre a lista e
+    insere cada hóspede adicional na tabela `ocupantes_checkin` vinculando ao ID
+    da estadia principal.
+  * Executa o `COMMIT` ou faz o `ROLLBACK` em caso de exceções de consistência.
+
+4.9. Módulo de Gerenciamento e Check-out (`src/app/checkin/update_checkin.ts`)
+- `listarCheckins(db)`: Obtém todos os check-ins cadastrados ordenados pelo horário
+  de check-in decrescente. Roda subconsultas para coletar a lista de acompanhantes
+  de cada estadia e as anexa em um array `acompanhantes` de forma estruturada.
+- `encerrarCheckin(db, idCheckin)`: Gerencia o fluxo de Check-out.
+  * Abre uma transação.
+  * Atualiza o registro do check-in definindo a situação como `'encerrado'` e
+    escrevendo a data/hora do checkout.
+  * Atualiza o status do quarto associado para `'sujo'`, liberando-o da ocupação
+    e sinalizando à recepção a necessidade de limpeza antes de uma nova estadia.
+  * Executa o `COMMIT` garantindo que ambas as atualizações ocorram de forma atômica.
+- `deletarCheckin(db, idCheckin)`: Exclui o registro de check-in. Os acompanhantes
+  armazenados na tabela `ocupantes_checkin` são excluídos automaticamente em cascata
+  devido à chave estrangeira `ON DELETE CASCADE`.
+
+4.10. Módulo de Login (`src/app/login/gerencia_login.ts`)
+- `efetuarLogin(db, input)`: Recebe o username digitado (normalizado para maiúsculas)
+  e a senha. Busca o salt e o hash cadastrados na tabela `login`. Roda a verificação
+  criptográfica. Se o login for bem-sucedido, executa um `LEFT JOIN` nas tabelas
+  `usuario` e `nivel_acesso` para retornar ao frontend os dados do funcionário
+  (id, nome completo, username e se o perfil de privilégios é 'admin' ou 'padrao').
+
+4.11. Módulo de Funcionários (`src/app/usuario/cadastro_usuario.ts` e `update_usuario.ts`)
+- Gerencia o fluxo transacional de criação e alteração de operadores do hostel.
+  * `cadastrarUsuario`: Valida CPF, duplicidade de Username. Insere o registro na
+    tabela `usuario`, depois gera o hash Scrypt e insere na tabela `login`, e por
+    último insere o nível de acesso em `nivel_acesso`. Tudo dentro de transação.
+  * `atualizarUsuario`: Roda checagens de duplicidades. Atualiza os dados em `usuario`
+    e `nivel_acesso`. A senha é alterada de forma opcional (apenas se fornecida uma
+    nova senha válida de no mínimo 6 caracteres).
+
+--------------------------------------------------------------------------------
+5. COMUNICAÇÃO IPC (Ponte de Segurança Front/Back)
+--------------------------------------------------------------------------------
+
+A integração segura entre a interface do usuário (Processo Renderer) e as funções
+de banco de dados locais no Node.js (Processo Main) ocorre por meio do Electron IPC:
+
+1. O script `src/preload.ts` atua como barreira e ponte. Ele não permite que o
+   frontend use módulos nativos de SO ou arquivos diretamente. Ele expõe uma API
+   controlada e isolada (`window.api`) com métodos específicos como
+   `window.api.listarHospedes()` ou `window.api.cadastrarCheckin(payload)`.
+2. Esses métodos acionam chamadas assíncronas do Electron: `ipcRenderer.invoke`.
+3. O processo principal `src/main.ts` registra ouvintes para estes canais utilizando
+   `ipcMain.handle`. Ao receber a chamada, ele encaminha os parâmetros e a conexão
+   aberta do banco de dados SQLite (`db`) para a respectiva função controladora.
+
+--------------------------------------------------------------------------------
+6. INTEGRAÇÕES COM APIS EXTERNAS
+--------------------------------------------------------------------------------
+
+O sistema hostelGerente faz o consumo da **BrasilAPI** para automatizar o cadastro
+de hóspedes corporativos:
+
+- Endpoint: `https://brasilapi.com.br/api/cnpj/v1/{cnpj}`
+- Método de Requisição: HTTP GET assíncrono (`fetch` JavaScript nativo).
+- Funcionamento na Interface: Na view de cadastro de hóspedes PJ e na tela de edição,
+  ao digitar os 14 números do CNPJ e clicar em "Buscar CNPJ", o frontend consome a API.
+- Retorno e Preenchimento: A resposta retorna os dados cadastrais da empresa
+  diretamente da Receita Federal. O sistema realiza o preenchimento automático dos
+  campos "Razão Social", "Nome Fantasia", "Telefone" e "E-mail" no formulário de
+  cadastro, reduzindo o tempo do atendente e evitando falhas humanas de digitação.
+
+--------------------------------------------------------------------------------
+7. INTERFACE E TEMA DINÂMICO
+--------------------------------------------------------------------------------
+
+A camada de visualização é construída em Vue 3 integrada ao Bootstrap 5:
+
+- Gerenciamento de Temas: O sistema possui suporte dinâmico a Tema Claro e Escuro.
+- Persistência: O tema escolhido pelo usuário é armazenado no `localStorage` do
+  navegador da aplicação sob a chave `theme`.
+- Funcionamento: Ao carregar, o sistema lê o valor salvo (ou recorre à preferência
+  do sistema operacional via media query `prefers-color-scheme`). A alteração
+  aplica dinamicamente o atributo `data-bs-theme="dark"` ou `"light"` na tag
+  `html` da página. O estilo CSS usa variáveis HSL para mudar gradientes, cores
+  de fontes, bordas e efeitos de transparência (estilo Glassmorphism).
+================================================================================
