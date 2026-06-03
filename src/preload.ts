@@ -27,4 +27,10 @@ contextBridge.exposeInMainWorld('api', {
   listarQuartos: () => ipcRenderer.invoke('quarto:listar'),
   atualizarQuarto: (input: any) => ipcRenderer.invoke('quarto:atualizar', input),
   deletarQuarto: (id: number) => ipcRenderer.invoke('quarto:deletar', id),
+
+  // Cadastro e Gerenciamento de Check-ins
+  cadastrarCheckin: (input: any) => ipcRenderer.invoke('checkin:cadastrar', input),
+  listarCheckins: () => ipcRenderer.invoke('checkin:listar'),
+  encerrarCheckin: (id: number) => ipcRenderer.invoke('checkin:atualizar', id),
+  deletarCheckin: (id: number) => ipcRenderer.invoke('checkin:deletar', id),
 });

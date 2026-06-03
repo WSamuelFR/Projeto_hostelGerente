@@ -30,6 +30,10 @@ import { listarQuartos, atualizarQuarto } from './app/quarto/update_quarto';
 // Importa controlador de Login
 import { efetuarLogin } from './app/login/gerencia_login';
 
+// Importa controladores de Check-in
+import { cadastrarCheckin } from './app/checkin/cadastro_checkin';
+import { listarCheckins, encerrarCheckin, deletarCheckin } from './app/checkin/update_checkin';
+
 let mainWindow: BrowserWindow | null = null;
 let db: DatabaseSync | null = null;
 
@@ -180,6 +184,20 @@ function setupIpcHandlers() {
   });
   ipcMain.handle('quarto:deletar', async (_, id) => {
     return deletarQuarto(db, id);
+  });
+
+  // Check-ins
+  ipcMain.handle('checkin:cadastrar', async (_, input) => {
+    return cadastrarCheckin(db, input);
+  });
+  ipcMain.handle('checkin:listar', async (_) => {
+    return listarCheckins(db);
+  });
+  ipcMain.handle('checkin:atualizar', async (_, id) => {
+    return encerrarCheckin(db, id);
+  });
+  ipcMain.handle('checkin:deletar', async (_, id) => {
+    return deletarCheckin(db, id);
   });
 }
 
