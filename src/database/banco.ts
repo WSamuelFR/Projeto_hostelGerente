@@ -6,7 +6,7 @@
 // Define as chaves estrangeiras como habilitadas por padrão
 export const PRAGMA_FOREIGN_KEYS = 'PRAGMA foreign_keys = ON;';
 
-// Lista individual de tabelas na ordem correta de dependência (criação)
+// Lista de tabelas ativas e necessárias na ordem correta de dependência (criação)
 export const TABLES = [
   // 1. hospede_cpf
   `CREATE TABLE IF NOT EXISTS hospede_cpf (
@@ -79,41 +79,7 @@ export const TABLES = [
     situacao TEXT NOT NULL CHECK(situacao IN ('limpo', 'sujo', 'manutenção'))
   );`,
 
-  // 8. produtos
-  `CREATE TABLE IF NOT EXISTS produtos (
-    id_produto INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL,
-    categoria TEXT,
-    codigo TEXT UNIQUE NOT NULL,
-    tributos REAL DEFAULT 0.0,
-    preco_custo REAL NOT NULL,
-    preco_venda REAL NOT NULL,
-    estoque_inicial INTEGER DEFAULT 0,
-    estoque_final INTEGER DEFAULT 0,
-    data_cadastro TEXT DEFAULT CURRENT_TIMESTAMP
-  );`,
-
-  // 9. venda_balcao
-  `CREATE TABLE IF NOT EXISTS venda_balcao (
-    id_venda_balcao INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_produto INTEGER NOT NULL,
-    id_hospedes INTEGER NULL,
-    id_usuario INTEGER NOT NULL,
-    produto TEXT NOT NULL,
-    preco REAL NOT NULL,
-    tributos REAL DEFAULT 0.0,
-    tarifa REAL DEFAULT 0.0,
-    desconto REAL DEFAULT 0.0,
-    total_final REAL NOT NULL,
-    metodo_pagamento TEXT NOT NULL CHECK(metodo_pagamento IN ('pix', 'debito', 'credito', 'especie')),
-    data_processo TEXT DEFAULT CURRENT_TIMESTAMP,
-    usuario_responsavel TEXT NOT NULL,
-    FOREIGN KEY (id_produto) REFERENCES produtos(id_produto),
-    FOREIGN KEY (id_hospedes) REFERENCES hospedes(id_hospedes),
-    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
-  );`,
-
-  // 10. checkin
+  // 8. checkin
   `CREATE TABLE IF NOT EXISTS checkin (
     id_checkin INTEGER PRIMARY KEY AUTOINCREMENT,
     id_hospedes INTEGER NOT NULL,
@@ -131,7 +97,7 @@ export const TABLES = [
     FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
   );`,
 
-  // 11. ocupantes_checkin
+  // 9. ocupantes_checkin
   `CREATE TABLE IF NOT EXISTS ocupantes_checkin (
     id_ocupantes_checkin INTEGER PRIMARY KEY AUTOINCREMENT,
     id_checkin INTEGER NOT NULL,
@@ -144,45 +110,7 @@ export const TABLES = [
     FOREIGN KEY (id_hospedes) REFERENCES hospedes(id_hospedes)
   );`,
 
-  // 12. consumo_checkin
-  `CREATE TABLE IF NOT EXISTS consumo_checkin (
-    id_venda_checkin INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_produto INTEGER NOT NULL,
-    id_checkin INTEGER NOT NULL,
-    id_usuario INTEGER NOT NULL,
-    produto TEXT NOT NULL,
-    preco REAL NOT NULL,
-    tributos REAL DEFAULT 0.0,
-    tarifa REAL DEFAULT 0.0,
-    desconto REAL DEFAULT 0.0,
-    total_final REAL NOT NULL,
-    metodo_pagamento TEXT NOT NULL CHECK(metodo_pagamento IN ('pix', 'debito', 'credito', 'especie')),
-    data_processo TEXT DEFAULT CURRENT_TIMESTAMP,
-    usuario_responsavel TEXT NOT NULL,
-    FOREIGN KEY (id_produto) REFERENCES produtos(id_produto),
-    FOREIGN KEY (id_checkin) REFERENCES checkin(id_checkin) ON DELETE CASCADE,
-    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
-  );`,
-
-  // 13. pagamento_chekin
-  `CREATE TABLE IF NOT EXISTS pagamento_chekin (
-    id_pagamento_chekin INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_checkin INTEGER NOT NULL,
-    id_usuario INTEGER NOT NULL,
-    desconto REAL DEFAULT 0.0,
-    tarifa REAL DEFAULT 0.0,
-    tributos REAL DEFAULT 0.0,
-    metodo_pagamento TEXT NOT NULL CHECK(metodo_pagamento IN ('pix', 'debito', 'credito', 'especie')),
-    total_final_checkin REAL NOT NULL,
-    total_final_consumo REAL NOT NULL,
-    total_final REAL NOT NULL,
-    usuario_responsavel TEXT NOT NULL,
-    data_processo TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_checkin) REFERENCES checkin(id_checkin),
-    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
-  );`,
-
-  // 14. reserva
+  // 10. reserva
   `CREATE TABLE IF NOT EXISTS reserva (
     id_reserva INTEGER PRIMARY KEY AUTOINCREMENT,
     id_hospedes INTEGER NOT NULL,
@@ -201,46 +129,33 @@ export const TABLES = [
     FOREIGN KEY (id_hospedes) REFERENCES hospedes(id_hospedes),
     FOREIGN KEY (id_quarto) REFERENCES quarto(id_quarto),
     FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
-  );`,
-
-  // 15. logs
-  `CREATE TABLE IF NOT EXISTS logs (
-    id_logs INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_usuario INTEGER NOT NULL,
-    operacao TEXT NOT NULL,
-    data_hora TEXT DEFAULT CURRENT_TIMESTAMP,
-    data_processo TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
-  );`,
-
-  // 16. financeiro
-  `CREATE TABLE IF NOT EXISTS financeiro (
-    id_financeiro INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_venda_balcao INTEGER NULL,
-    id_venda_checkin INTEGER NULL,
-    id_pagamento_chekin INTEGER NULL,
-    total_dia REAL DEFAULT 0.0,
-    total_semana REAL DEFAULT 0.0,
-    total_mes REAL DEFAULT 0.0,
-    total_ano REAL DEFAULT 0.0,
-    entradas REAL DEFAULT 0.0,
-    saidas REAL DEFAULT 0.0,
-    ganhos REAL DEFAULT 0.0,
-    perdas REAL DEFAULT 0.0,
-    progecao REAL DEFAULT 0.0,
-    FOREIGN KEY (id_venda_balcao) REFERENCES venda_balcao(id_venda_balcao),
-    FOREIGN KEY (id_venda_checkin) REFERENCES consumo_checkin(id_venda_checkin),
-    FOREIGN KEY (id_pagamento_chekin) REFERENCES pagamento_chekin(id_pagamento_chekin)
   );`
 ];
 
-// SCHEMA completo consolidado
+// SCHEMA completo consolidado das tabelas ativas
 export const SCHEMA = TABLES.join('\n\n');
 
+/**
+ * Inicializa a conexão e aplica o esquema das tabelas ativas,
+ * realizando também a limpeza de tabelas antigas/inativas.
+ */
 export function inicializarBanco(db: { exec: (sql: string) => any }): void {
+  // Desativa chaves estrangeiras temporariamente para rodar a limpeza
+  db.exec('PRAGMA foreign_keys = OFF;');
+  
+  // Limpeza de tabelas inativas
+  db.exec(`
+    DROP TABLE IF EXISTS financeiro;
+    DROP TABLE IF EXISTS pagamento_chekin;
+    DROP TABLE IF EXISTS consumo_checkin;
+    DROP TABLE IF EXISTS venda_balcao;
+    DROP TABLE IF EXISTS produtos;
+    DROP TABLE IF EXISTS logs;
+  `);
+
   // Ativa chaves estrangeiras
   db.exec(PRAGMA_FOREIGN_KEYS);
   
-  // Executa o schema completo
+  // Executa o schema completo das tabelas ativas
   db.exec(SCHEMA);
 }
