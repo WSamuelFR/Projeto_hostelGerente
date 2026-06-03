@@ -3,9 +3,8 @@
  * Caminho: src/app/config/criptografia.ts
  */
 
-declare var require: any;
-declare var Buffer: any;
-const crypto = require('crypto');
+import * as crypto from 'crypto';
+
 
 /**
  * Gera um hash seguro para a senha utilizando o algoritmo Scrypt.

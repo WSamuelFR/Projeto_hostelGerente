@@ -3,7 +3,7 @@
  * Caminho: src/renderer.ts
  */
 
-import { createApp, ref, onMounted } from 'vue';
+import { createApp, ref, onMounted, h } from 'vue';
 
 // Importações Globais de Estilo (Bootstrap 5 + Ícones)
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -15,17 +15,6 @@ import MainHeaderLayout from '../public/view/dashboard/header.vue';
 
 // Componente Root App: Implementa Roteamento Simples e Seguro via Hash
 const App = {
-  template: `
-    <div>
-      <!-- Renderiza a tela de login caso a rota seja login, ou o Dashboard se autenticado -->
-      <LoginView v-if="currentRoute === 'login'" />
-      <MainHeaderLayout v-else />
-    </div>
-  `,
-  components: {
-    LoginView,
-    MainHeaderLayout
-  },
   setup() {
     const currentRoute = ref('login');
 
@@ -51,6 +40,13 @@ const App = {
     return {
       currentRoute
     };
+  },
+  render() {
+    return h('div', [
+      this.currentRoute === 'login'
+        ? h(LoginView)
+        : h(MainHeaderLayout)
+    ]);
   }
 };
 
