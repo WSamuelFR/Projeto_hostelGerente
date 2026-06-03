@@ -86,8 +86,8 @@
               <tr>
                 <th scope="col" class="py-3 ps-4" style="width: 45%;">Nome</th>
                 <th scope="col" class="py-3" style="width: 15%;">Tipo</th>
-                <th scope="col" class="py-3" style="width: 30%;">Contato</th>
-                <th scope="col" class="py-3 text-center" style="width: 10%;">Ações</th>
+                <th scope="col" class="py-3" style="width: 25%;">Contato</th>
+                <th scope="col" class="py-3 text-center" style="width: 15%;">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -122,12 +122,20 @@
                   </div>
                 </td>
                 <td class="py-3 text-center">
-                  <button
-                    class="btn btn-outline-primary btn-sm px-3 rounded-pill fw-semibold btn-scale"
-                    @click="openEditModal(h)"
-                  >
-                    <i class="bi bi-pencil-square me-1"></i> Editar
-                  </button>
+                  <div class="d-flex justify-content-center gap-2">
+                    <button
+                      class="btn btn-outline-primary btn-sm px-3 rounded-pill fw-semibold btn-scale"
+                      @click="openEditModal(h)"
+                    >
+                      <i class="bi bi-pencil-square me-1"></i> Editar
+                    </button>
+                    <button
+                      class="btn btn-outline-danger btn-sm px-3 rounded-pill fw-semibold btn-scale"
+                      @click="openDeleteModal(h)"
+                    >
+                      <i class="bi bi-trash-fill me-1"></i> Excluir
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -137,12 +145,11 @@
 
     </div>
 
-    <!-- MODAL DE EDIÇÃO (Auto-suficiente sem dependências JS externas) -->
+    <!-- MODAL DE EDIÇÃO -->
     <div v-if="showModal" class="modal fade show" tabindex="-1" style="display: block; background: rgba(0, 0, 0, 0.65);" role="dialog">
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content shadow-lg border-0 rounded-4 card-glass">
           
-          <!-- Cabeçalho do Modal -->
           <div class="modal-header border-bottom border-secondary-subtle py-3 px-4">
             <h5 class="modal-title fw-bold text-primary-emphasis d-flex align-items-center">
               <i class="bi bi-pencil-square me-2 text-primary"></i>
@@ -151,9 +158,7 @@
             <button type="button" class="btn-close" @click="closeModal" aria-label="Fechar"></button>
           </div>
           
-          <!-- Corpo do Modal -->
           <div class="modal-body p-4">
-            <!-- Alerta no Modal -->
             <div v-if="modalAlert.show" :class="['alert alert-dismissible fade show', `alert-${modalAlert.type}`]" role="alert">
               <i class="bi bi-exclamation-triangle-fill me-2"></i>
               {{ modalAlert.message }}
@@ -161,9 +166,7 @@
             </div>
 
             <form @submit.prevent="saveChanges" novalidate>
-              <!-- Campos de Pessoa Física -->
               <div v-if="modalData.tipo === 'PF'" class="row g-3">
-                <!-- Nome Completo -->
                 <div class="col-md-12">
                   <label for="modalNomeCompleto" class="form-label fw-semibold">Nome Completo <span class="text-danger">*</span></label>
                   <div class="input-group">
@@ -179,7 +182,6 @@
                   </div>
                 </div>
 
-                <!-- CPF -->
                 <div class="col-md-6">
                   <label for="modalCPF" class="form-label fw-semibold">CPF <span class="text-danger">*</span></label>
                   <div class="input-group">
@@ -195,7 +197,6 @@
                   </div>
                 </div>
 
-                <!-- RG -->
                 <div class="col-md-6">
                   <label for="modalRG" class="form-label fw-semibold">RG</label>
                   <div class="input-group">
@@ -210,7 +211,6 @@
                   </div>
                 </div>
 
-                <!-- Data de Nascimento -->
                 <div class="col-md-4">
                   <label for="modalDataNascimento" class="form-label fw-semibold">Data de Nascimento</label>
                   <div class="input-group">
@@ -224,7 +224,6 @@
                   </div>
                 </div>
 
-                <!-- Telefone -->
                 <div class="col-md-4">
                   <label for="modalTelefonePF" class="form-label fw-semibold">Telefone</label>
                   <div class="input-group">
@@ -239,7 +238,6 @@
                   </div>
                 </div>
 
-                <!-- Email -->
                 <div class="col-md-4">
                   <label for="modalEmailPF" class="form-label fw-semibold">Email</label>
                   <div class="input-group">
@@ -254,9 +252,7 @@
                 </div>
               </div>
 
-              <!-- Campos de Pessoa Jurídica -->
               <div v-else class="row g-3">
-                <!-- CNPJ -->
                 <div class="col-md-12">
                   <label for="modalCNPJ" class="form-label fw-semibold">CNPJ <span class="text-danger">*</span></label>
                   <div class="input-group">
@@ -282,7 +278,6 @@
                   </div>
                 </div>
 
-                <!-- Razão Social -->
                 <div class="col-md-6">
                   <label for="modalRazaoSocial" class="form-label fw-semibold">Razão Social <span class="text-danger">*</span></label>
                   <div class="input-group">
@@ -298,7 +293,6 @@
                   </div>
                 </div>
 
-                <!-- Nome Fantasia -->
                 <div class="col-md-6">
                   <label for="modalNomeFantasia" class="form-label fw-semibold">Nome Fantasia</label>
                   <div class="input-group">
@@ -313,7 +307,6 @@
                   </div>
                 </div>
 
-                <!-- Data de Fundação -->
                 <div class="col-md-4">
                   <label for="modalDataFundacao" class="form-label fw-semibold">Data de Fundação</label>
                   <div class="input-group">
@@ -327,7 +320,6 @@
                   </div>
                 </div>
 
-                <!-- Telefone -->
                 <div class="col-md-4">
                   <label for="modalTelefonePJ" class="form-label fw-semibold">Telefone</label>
                   <div class="input-group">
@@ -342,7 +334,6 @@
                   </div>
                 </div>
 
-                <!-- Email -->
                 <div class="col-md-4">
                   <label for="modalEmailPJ" class="form-label fw-semibold">Email</label>
                   <div class="input-group">
@@ -357,7 +348,6 @@
                 </div>
               </div>
 
-              <!-- Footer do Modal -->
               <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top border-secondary-subtle">
                 <button type="button" class="btn btn-light px-4 py-2 fw-semibold text-secondary" @click="closeModal">
                   Cancelar
@@ -368,20 +358,73 @@
                   Salvar Alterações
                 </button>
               </div>
-
             </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DE EXCLUSÃO COM CONFIRMAÇÃO DUPLA -->
+    <div v-if="showDeleteModal" class="modal fade show" tabindex="-1" style="display: block; background: rgba(0, 0, 0, 0.65);" role="dialog">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-4 card-glass">
+          
+          <div class="modal-header border-bottom border-secondary-subtle py-3 px-4 bg-danger-subtle text-danger">
+            <h5 class="modal-title fw-bold d-flex align-items-center">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              Excluir Hóspede Permanentemente
+            </h5>
+            <button type="button" class="btn-close" @click="closeDeleteModal" aria-label="Fechar"></button>
+          </div>
+          
+          <div class="modal-body p-4">
+            <p class="text-body fs-5">
+              Você está prestes a excluir o hóspede <strong>{{ deleteGuestTarget?.nome }}</strong>.
+            </p>
+            <p class="text-secondary small">
+              Esta ação é definitiva e removerá permanentemente o cadastro e todo o histórico associado a este hóspede.
+            </p>
+            
+            <!-- Confirmação de segurança -->
+            <div class="form-check mt-4 p-3 border rounded border-warning bg-warning-subtle text-warning-emphasis">
+              <input
+                class="form-check-input ms-0 me-2"
+                type="checkbox"
+                id="consentCheckbox"
+                v-model="deleteConsent"
+              />
+              <label class="form-check-label fw-semibold cursor-pointer" for="consentCheckbox">
+                Confirmo que desejo excluir este hóspede e todos os seus registros permanentemente.
+              </label>
+            </div>
+          </div>
+          
+          <div class="modal-footer border-top border-secondary-subtle p-3">
+            <button type="button" class="btn btn-light px-4" @click="closeDeleteModal" :disabled="isDeleting">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger px-4 fw-bold shadow-sm"
+              :disabled="!deleteConsent || isDeleting"
+              @click="confirmDelete"
+            >
+              <span v-if="isDeleting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              <i v-else class="bi bi-trash-fill me-1"></i>
+              Excluir Hóspede
+            </button>
           </div>
 
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref, reactive, computed, onMounted } from 'vue';
 
-// Interface do Hóspede no Frontend
 interface Hospede {
   id_hospedes: number;
   id_hospede_pf: number | null;
@@ -417,23 +460,30 @@ export default defineComponent({
       message: ''
     });
 
-    // Estado do Modal
+    // Estados dos Modais
     const showModal = ref(false);
+    const showDeleteModal = ref(false);
+    
     const isSaving = ref(false);
+    const isDeleting = ref(false);
     const isSearchingCnpj = ref(false);
     
-    // Controles de Alerta do Modal
+    // Controles de Exclusão
+    const deleteGuestTarget = ref<Hospede | null>(null);
+    const deleteConsent = ref(false);
+
+    // Controles de Alerta do Modal de Edição
     const modalAlert = reactive({
       show: false,
       type: 'danger',
       message: ''
     });
 
-    // Dados Carregados para Edição no Modal
+    // Dados Carregados para Edição
     const modalData = reactive({
       id_hospedes: 0,
       tipo: 'PF' as 'PF' | 'PJ',
-      id_tipo: 0, // id_hospede_pf ou id_hospede_pj
+      id_tipo: 0,
       nome_completo: '',
       rg: '',
       cpf: '',
@@ -446,15 +496,12 @@ export default defineComponent({
       email: ''
     });
 
-    // Validador de CNPJ do modal
     const isCnpjLengthValid = computed(() => {
       const clean = modalData.cnpj.replace(/[^\d]/g, '');
       return clean.length === 14;
     });
 
-    // Ciclo de vida - Carrega hóspedes e tema
     onMounted(async () => {
-      // Tema
       const savedTheme = localStorage.getItem('theme');
       if (savedTheme === 'dark') {
         isDarkMode.value = true;
@@ -464,12 +511,9 @@ export default defineComponent({
         isDarkMode.value = window.matchMedia('(prefers-color-scheme: dark)').matches;
       }
       toggleThemeDOM();
-
-      // Carregar Hóspedes
       await fetchHospedes();
     });
 
-    // Alternar tema e salvar no localStorage
     const toggleTheme = () => {
       localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light');
       toggleThemeDOM();
@@ -484,16 +528,14 @@ export default defineComponent({
       }
     };
 
-    // Método para buscar lista de hóspedes do Backend
     const fetchHospedes = async () => {
       try {
         let list: Hospede[] = [];
 
-        // Conexão com o backend real do electron
         if ((window as any).api && (window as any).api.listarHospedes) {
           list = await (window as any).api.listarHospedes();
         } else {
-          // Mock data para desenvolvimento/visualização rica imediata
+          // Mock data para desenvolvimento/visualização imediata
           list = [
             {
               id_hospedes: 1,
@@ -534,22 +576,17 @@ export default defineComponent({
             }
           ];
         }
-
         hospedes.value = list;
       } catch (err: any) {
         triggerAlert('danger', 'Erro de Carga:', 'Não foi possível listar os hóspedes.');
       }
     };
 
-    // Filtros reativos (Pesquisa e Tipo)
     const filteredHospedes = computed(() => {
       return hospedes.value.filter(h => {
-        // 1. Filtro de tipo
         if (filterType.value !== 'TODOS' && h.tipo !== filterType.value) {
           return false;
         }
-
-        // 2. Filtro de pesquisa por texto
         if (!searchQuery.value.trim()) return true;
         const query = searchQuery.value.toLowerCase().trim();
         const doc = h.tipo === 'PF' ? (h.cpf || '') : (h.cnpj || '');
@@ -567,7 +604,6 @@ export default defineComponent({
       filterType.value = type;
     };
 
-    // Formatação visual do documento
     const formatDocument = (h: Hospede) => {
       if (h.tipo === 'PF') {
         const cpf = h.cpf || '';
@@ -582,7 +618,6 @@ export default defineComponent({
       }
     };
 
-    // Controles de Alerta
     const triggerAlert = (type: 'success' | 'danger' | 'warning', title: string, message: string) => {
       alert.type = type;
       alert.title = title;
@@ -593,7 +628,7 @@ export default defineComponent({
     const closeAlert = () => { alert.show = false; };
     const closeModalAlert = () => { modalAlert.show = false; };
 
-    // Abre modal para edição
+    // Ações do Modal de Edição
     const openEditModal = (h: Hospede) => {
       closeAlert();
       closeModalAlert();
@@ -601,24 +636,17 @@ export default defineComponent({
       modalData.id_hospedes = h.id_hospedes;
       modalData.tipo = h.tipo;
       modalData.id_tipo = h.tipo === 'PF' ? (h.id_hospede_pf || 0) : (h.id_hospede_pj || 0);
-
-      // Preenchimento de dados PF
       modalData.nome_completo = h.nome || '';
       modalData.rg = h.rg || '';
       modalData.cpf = h.cpf || '';
       modalData.data_nascimento = h.data_nascimento || '';
-
-      // Preenchimento de dados PJ
       modalData.razao_social = h.razao_social || h.nome || '';
       modalData.nome_fantasia = h.nome_fantasia || '';
       modalData.cnpj = h.cnpj || '';
       modalData.data_fundacao = h.data_fundacao || '';
-
-      // Comuns
       modalData.telefone = h.telefone || '';
       modalData.email = h.email || '';
 
-      // Aplicar máscaras aos inputs iniciais
       if (h.tipo === 'PF') {
         maskCPF();
         maskRG();
@@ -635,7 +663,57 @@ export default defineComponent({
       closeModalAlert();
     };
 
-    // Filtros e Máscaras do Modal
+    // Ações do Modal de Exclusão
+    const openDeleteModal = (h: Hospede) => {
+      closeAlert();
+      deleteGuestTarget.value = h;
+      deleteConsent.value = false;
+      showDeleteModal.value = true;
+    };
+
+    const closeDeleteModal = () => {
+      showDeleteModal.value = false;
+      deleteGuestTarget.value = null;
+      deleteConsent.value = false;
+    };
+
+    const confirmDelete = async () => {
+      if (!deleteGuestTarget.value || !deleteConsent.value) return;
+
+      isDeleting.value = true;
+      try {
+        const id = deleteGuestTarget.value.id_hospedes;
+        let response: { success: boolean; message: string };
+
+        // Integração real via Electron IPC
+        if ((window as any).api && (window as any).api.deletarHospede) {
+          response = await (window as any).api.deletarHospede(id);
+        } else {
+          // Simulação no Client-Side
+          console.log(`Excluindo hóspede id: ${id}`);
+          await new Promise(resolve => setTimeout(resolve, 800));
+          // Remove localmente do mock
+          hospedes.value = hospedes.value.filter(item => item.id_hospedes !== id);
+          response = { success: true, message: 'Hóspede excluído com sucesso (Simulação).' };
+        }
+
+        if (response.success) {
+          triggerAlert('success', 'Excluído!', response.message);
+          closeDeleteModal();
+          await fetchHospedes();
+        } else {
+          triggerAlert('danger', 'Erro na Exclusão:', response.message);
+          closeDeleteModal();
+        }
+      } catch (err: any) {
+        triggerAlert('danger', 'Erro crítico:', err.message || 'Não foi possível excluir o hóspede.');
+        closeDeleteModal();
+      } finally {
+        isDeleting.value = false;
+      }
+    };
+
+    // Formatações e Máscaras
     const handleNameInput = (field: string, event: Event) => {
       const input = event.target as HTMLInputElement;
       let filtered = input.value.replace(/[^a-zA-ZáàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\s]/g, '');
@@ -701,7 +779,6 @@ export default defineComponent({
       modalData.telefone = formatted;
     };
 
-    // Busca de CNPJ no Modal
     const fetchCnpjData = async () => {
       const rawCnpj = modalData.cnpj.replace(/[^\d]/g, '');
       if (rawCnpj.length !== 14) return;
@@ -727,7 +804,6 @@ export default defineComponent({
         if (data.email) {
           modalData.email = data.email.toLowerCase();
         }
-
       } catch (err: any) {
         modalAlert.message = err.message || 'Falha ao buscar dados do CNPJ.';
         modalAlert.show = true;
@@ -736,7 +812,6 @@ export default defineComponent({
       }
     };
 
-    // Salvar modificações
     const saveChanges = async () => {
       closeModalAlert();
       isSaving.value = true;
@@ -782,11 +857,9 @@ export default defineComponent({
 
         let response: { success: boolean; message: string };
 
-        // Integração real via Electron IPC
         if ((window as any).api && (window as any).api.atualizarHospede) {
           response = await (window as any).api.atualizarHospede(payload);
         } else {
-          // Simulação no Client-Side
           console.log('Dados atualizados enviados ao backend:', payload);
           await new Promise(resolve => setTimeout(resolve, 800));
           response = { success: true, message: 'Dados do hóspede atualizados com sucesso (Simulação).' };
@@ -795,12 +868,11 @@ export default defineComponent({
         if (response.success) {
           triggerAlert('success', 'Sucesso!', response.message);
           closeModal();
-          await fetchHospedes(); // Recarrega a tabela com os novos dados
+          await fetchHospedes();
         } else {
           modalAlert.message = response.message;
           modalAlert.show = true;
         }
-
       } catch (err: any) {
         modalAlert.message = err.message || 'Erro crítico ao atualizar o hóspede.';
         modalAlert.show = true;
@@ -816,8 +888,12 @@ export default defineComponent({
       hospedes,
       alert,
       showModal,
+      showDeleteModal,
       isSaving,
+      isDeleting,
       isSearchingCnpj,
+      deleteGuestTarget,
+      deleteConsent,
       modalAlert,
       modalData,
       isCnpjLengthValid,
@@ -829,6 +905,9 @@ export default defineComponent({
       closeModalAlert,
       openEditModal,
       closeModal,
+      openDeleteModal,
+      closeDeleteModal,
+      confirmDelete,
       handleNameInput,
       maskCPF,
       maskCNPJ,
@@ -855,7 +934,6 @@ export default defineComponent({
   cursor: pointer;
 }
 
-/* Glassmorphism card */
 .card-glass {
   background: var(--bs-card-bg);
   backdrop-filter: blur(8px);
@@ -863,18 +941,15 @@ export default defineComponent({
   border: 1px solid var(--bs-border-color-translucent);
 }
 
-/* Busca */
 .search-group .form-control:focus, .search-group .input-group-text:focus {
   border-color: var(--bs-primary-border-subtle);
   box-shadow: none;
 }
 
-/* Filtro */
 .btn-filter {
   transition: all 0.2s ease;
 }
 
-/* Avatar circular de ícone */
 .avatar-circle {
   width: 42px;
   height: 42px;
@@ -886,7 +961,6 @@ export default defineComponent({
   font-weight: bold;
 }
 
-/* Tabela Hover */
 .table-hover tbody tr:hover {
   background-color: var(--bs-secondary-bg-subtle) !important;
 }
@@ -895,7 +969,6 @@ export default defineComponent({
   font-size: 0.85rem;
 }
 
-/* Efeito botão */
 .btn-scale {
   transition: transform 0.1s ease, box-shadow 0.15s ease;
 }
