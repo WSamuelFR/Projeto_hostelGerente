@@ -31,15 +31,15 @@ O projeto segue o modelo clássico de divisão de processos do Electron para gar
 
 ```mermaid
 graph TD
-    subgraph Renderer Process (Frontend Vue 3)
+    subgraph Renderer["Renderer Process (Frontend Vue 3)"]
         UI[Views & Components] -->|Chama Métodos Expostos| API_Bridge[window.api]
     end
 
-    subgraph Preload Script (Ponte de Segurança)
+    subgraph Preload["Preload Script (Ponte de Segurança)"]
         API_Bridge -->|ipcRenderer.invoke| IPC_Bridge[Preload Secure Bridge]
     end
 
-    subgraph Main Process (Backend Node.js)
+    subgraph Main["Main Process (Backend Node.js)"]
         IPC_Bridge -->|ipcMain.handle| Electron_Main[Processo Principal]
         Electron_Main -->|Importa| Controllers[Controllers e Lógicas]
         Controllers -->|Consultas SQL| DB[(Banco SQLite Nativo)]
