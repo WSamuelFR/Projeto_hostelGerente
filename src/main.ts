@@ -22,6 +22,11 @@ import { cadastrarUsuario } from './app/usuario/cadastro_usuario';
 import { listarUsuarios, atualizarUsuario } from './app/usuario/update_usuario';
 import { deletarUsuario } from './app/usuario/deleta_usuario';
 
+// Importa controladores de Quarto
+import { cadastrarQuarto } from './app/quarto/cadastro_quarto';
+import { deletarQuarto } from './app/quarto/deleta_quarto';
+import { listarQuartos, atualizarQuarto } from './app/quarto/update_quarto';
+
 // Importa controlador de Login
 import { efetuarLogin } from './app/login/gerencia_login';
 
@@ -161,6 +166,20 @@ function setupIpcHandlers() {
   });
   ipcMain.handle('usuario:deletar', async (_, id) => {
     return deletarUsuario(db, id);
+  });
+
+  // Quartos
+  ipcMain.handle('quarto:cadastrar', async (_, input) => {
+    return cadastrarQuarto(db, input);
+  });
+  ipcMain.handle('quarto:listar', async (_) => {
+    return listarQuartos(db);
+  });
+  ipcMain.handle('quarto:atualizar', async (_, input) => {
+    return atualizarQuarto(db, input);
+  });
+  ipcMain.handle('quarto:deletar', async (_, id) => {
+    return deletarQuarto(db, id);
   });
 }
 

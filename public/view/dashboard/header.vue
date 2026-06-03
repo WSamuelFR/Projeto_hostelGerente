@@ -38,6 +38,14 @@
               <i class="bi bi-person-badge-fill me-2"></i>
               usuarios
             </button>
+            <button
+              class="btn px-4 py-2 fw-bold text-uppercase tab-btn transition-all"
+              :class="activeTab === 'quartos' ? 'btn-primary shadow-sm' : 'btn-link text-secondary text-decoration-none'"
+              @click="setTab('quartos')"
+            >
+              <i class="bi bi-door-closed-fill me-2"></i>
+              quartos
+            </button>
           </div>
         </div>
       </header>
@@ -52,6 +60,7 @@
           <div v-if="activeNav === 'DASHBOARD'">
             <GerenciaHospede v-if="activeTab === 'hospede'" />
             <GerenciaUsuario v-else-if="activeTab === 'usuarios'" />
+            <GerenciaQuarto v-else-if="activeTab === 'quartos'" />
           </div>
 
           <!-- Seção de Cadastros -->
@@ -61,6 +70,10 @@
 
           <div v-else-if="activeNav === 'CADASTRO_USUARIO'">
             <CadastroUsuario />
+          </div>
+
+          <div v-else-if="activeNav === 'CADASTRO_QUARTO'">
+            <CadastroQuarto />
           </div>
 
         </div>
@@ -81,6 +94,8 @@ import CadastroHospede from '../hospede/cadastro_hospede.vue';
 import CadastroUsuario from '../usuario/cadastro_usuario.vue';
 import GerenciaHospede from '../hospede/gerencia_hospede.vue';
 import GerenciaUsuario from '../usuario/gerencia_usuario.vue';
+import CadastroQuarto from '../quarto/cadastro_quarto.vue';
+import GerenciaQuarto from '../quarto/gerencia_quarto.vue';
 
 export default defineComponent({
   name: 'MainHeaderLayout',
@@ -89,16 +104,18 @@ export default defineComponent({
     CadastroHospede,
     CadastroUsuario,
     GerenciaHospede,
-    GerenciaUsuario
+    GerenciaUsuario,
+    CadastroQuarto,
+    GerenciaQuarto
   },
   setup() {
     const isDarkMode = ref(false);
     
     // Estado de Navegação Lateral
-    const activeNav = ref<'DASHBOARD' | 'CADASTRO_HOSPEDE' | 'CADASTRO_USUARIO'>('DASHBOARD');
+    const activeNav = ref<'DASHBOARD' | 'CADASTRO_HOSPEDE' | 'CADASTRO_USUARIO' | 'CADASTRO_QUARTO'>('DASHBOARD');
     
     // Estado das abas do Header Flutuante
-    const activeTab = ref<'hospede' | 'usuarios'>('hospede');
+    const activeTab = ref<'hospede' | 'usuarios' | 'quartos'>('hospede');
 
     onMounted(() => {
       // Verifica se o usuário está logado
@@ -121,12 +138,12 @@ export default defineComponent({
     };
 
     // Altera o componente central
-    const handleNavigation = (destination: 'DASHBOARD' | 'CADASTRO_HOSPEDE' | 'CADASTRO_USUARIO') => {
+    const handleNavigation = (destination: 'DASHBOARD' | 'CADASTRO_HOSPEDE' | 'CADASTRO_USUARIO' | 'CADASTRO_QUARTO') => {
       activeNav.value = destination;
     };
-
+    
     // Altera a aba de gerenciamento no header flutuante
-    const setTab = (tab: 'hospede' | 'usuarios') => {
+    const setTab = (tab: 'hospede' | 'usuarios' | 'quartos') => {
       activeTab.value = tab;
     };
 

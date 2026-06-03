@@ -21,4 +21,10 @@ contextBridge.exposeInMainWorld('api', {
   listarUsuarios: () => ipcRenderer.invoke('usuario:listar'),
   atualizarUsuario: (input: any) => ipcRenderer.invoke('usuario:atualizar', input),
   deletarUsuario: (id: number) => ipcRenderer.invoke('usuario:deletar', id),
+
+  // Cadastro e Gerenciamento de Quartos
+  cadastrarQuarto: (input: any) => ipcRenderer.invoke('quarto:cadastrar', input),
+  listarQuartos: () => ipcRenderer.invoke('quarto:listar'),
+  atualizarQuarto: (input: any) => ipcRenderer.invoke('quarto:atualizar', input),
+  deletarQuarto: (id: number) => ipcRenderer.invoke('quarto:deletar', id),
 });

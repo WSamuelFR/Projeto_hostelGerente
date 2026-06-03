@@ -4,7 +4,7 @@
  */
 
 export interface MenuLateralItem {
-  id: 'DASHBOARD' | 'CADASTRO_HOSPEDE' | 'CADASTRO_USUARIO';
+  id: 'DASHBOARD' | 'CADASTRO_HOSPEDE' | 'CADASTRO_USUARIO' | 'CADASTRO_QUARTO';
   label: string;
   icon: string;
   perfisAutorizados: ('admin' | 'padrao')[];
@@ -29,6 +29,12 @@ export const MENU_ITEMS: MenuLateralItem[] = [
     label: 'Cadastrar Usuário',
     icon: 'bi-person-badge-fill',
     perfisAutorizados: ['admin'] // Apenas administradores podem cadastrar outros usuários
+  },
+  {
+    id: 'CADASTRO_QUARTO',
+    label: 'Cadastrar Quarto',
+    icon: 'bi-door-open-fill',
+    perfisAutorizados: ['admin', 'padrao']
   }
 ];
 

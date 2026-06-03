@@ -43,7 +43,7 @@ const App = {
   },
   render() {
     return h('div', [
-      this.currentRoute === 'login'
+      (this as any).currentRoute === 'login'
         ? h(LoginView)
         : h(MainHeaderLayout)
     ]);
