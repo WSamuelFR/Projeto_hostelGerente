@@ -1,0 +1,323 @@
+<template>
+  <div class="container-fluid py-4 min-vh-100 transition-theme" :data-bs-theme="isDarkMode ? 'dark' : 'light'">
+    <div class="container max-width-card">
+      
+      <!-- Cabeçalho com Título e Switch de Modo Escuro -->
+      <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary-subtle">
+        <h2 class="h3 mb-0 fw-bold d-flex align-items-center text-primary-emphasis">
+          <i class="bi bi-door-open-fill me-2"></i>
+          Cadastro de Quarto
+        </h2>
+        <div class="form-check form-switch d-flex align-items-center">
+          <i class="bi bi-sun-fill me-2 text-warning" v-if="!isDarkMode"></i>
+          <i class="bi bi-moon-stars-fill me-2 text-primary" v-else></i>
+          <input
+            class="form-check-input theme-toggle-switch cursor-pointer"
+            type="checkbox"
+            role="switch"
+            id="themeToggle"
+            v-model="isDarkMode"
+            @change="toggleTheme"
+          />
+          <label class="form-check-label ms-2 fw-semibold text-secondary" for="themeToggle">
+            {{ isDarkMode ? 'Modo Escuro' : 'Modo Claro' }}
+          </label>
+        </div>
+      </div>
+
+      <!-- Alertas de Feedback -->
+      <div v-if="alert.show" :class="['alert alert-dismissible fade show', `alert-${alert.type}`]" role="alert">
+        <i :class="['bi me-2', alert.type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill']"></i>
+        <strong>{{ alert.title }}</strong> {{ alert.message }}
+        <button type="button" class="btn-close" @click="closeAlert" aria-label="Close"></button>
+      </div>
+
+      <!-- Card Principal -->
+      <div class="card shadow-sm border-0 rounded-4 overflow-hidden card-glass">
+        <div class="card-header bg-body-tertiary border-0 py-3 px-4">
+          <h5 class="mb-0 fw-bold text-secondary-emphasis">Formulário de Cadastro</h5>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          <form @submit.prevent="handleSubmit" novalidate>
+            <div class="row g-4">
+              
+              <!-- Número do Quarto -->
+              <div class="col-md-6">
+                <label for="numeroQuarto" class="form-label fw-semibold">Número do Quarto <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-body border-end-0"><i class="bi bi-hash text-secondary"></i></span>
+                  <input
+                    type="text"
+                    class="form-control border-start-0 ps-0 text-uppercase"
+                    id="numeroQuarto"
+                    placeholder="EX: 101, 204A"
+                    v-model="formData.numero"
+                    @input="handleNumeroInput"
+                    required
+                  />
+                </div>
+                <div class="form-text text-secondary-emphasis">Código único do quarto (letras e números).</div>
+              </div>
+
+              <!-- Modelo do Quarto -->
+              <div class="col-md-6">
+                <label for="modeloQuarto" class="form-label fw-semibold">Modelo do Quarto <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-body border-end-0"><i class="bi bi-tag text-secondary"></i></span>
+                  <select
+                    class="form-select border-start-0 ps-0"
+                    id="modeloQuarto"
+                    v-model="formData.modelo"
+                    required
+                  >
+                    <option value="simples">Simples</option>
+                    <option value="suíte">Suíte</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Capacidade -->
+              <div class="col-md-6">
+                <label for="capacidadeQuarto" class="form-label fw-semibold">Capacidade (Hóspedes) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-body border-end-0"><i class="bi bi-people text-secondary"></i></span>
+                  <input
+                    type="number"
+                    class="form-control border-start-0 ps-0"
+                    id="capacidadeQuarto"
+                    min="1"
+                    placeholder="EX: 2"
+                    v-model="formData.capacidade"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Situação Inicial -->
+              <div class="col-md-6">
+                <label for="situacaoQuarto" class="form-label fw-semibold">Situação Inicial <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-body border-end-0"><i class="bi bi-info-circle text-secondary"></i></span>
+                  <select
+                    class="form-select border-start-0 ps-0"
+                    id="situacaoQuarto"
+                    v-model="formData.situacao"
+                    required
+                  >
+                    <option value="limpo">Limpo</option>
+                    <option value="sujo">Sujo</option>
+                    <option value="manutenção">Manutenção</option>
+                  </select>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="d-flex justify-content-end gap-2 mt-5 pt-3 border-top border-secondary-subtle">
+              <button type="button" class="btn btn-light px-4 py-2 fw-semibold rounded-3 text-secondary" @click="resetForm">
+                <i class="bi bi-x-circle me-1"></i> Limpar
+              </button>
+              <button type="submit" class="btn btn-primary px-5 py-2 fw-bold rounded-3 shadow-sm btn-scale" :disabled="isSubmitting">
+                <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                <i v-else class="bi bi-check-circle me-1"></i> Salvar Cadastro
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</template>
+
+<script lang="ts">
+import { defineComponent, ref, reactive, onMounted } from 'vue';
+
+interface ResponseFormat {
+  success: boolean;
+  message: string;
+  data?: any;
+}
+
+export default defineComponent({
+  name: 'CadastroQuarto',
+  setup() {
+    const isDarkMode = ref(false);
+    const isSubmitting = ref(false);
+
+    // Controle de Alerta
+    const alert = reactive({
+      show: false,
+      type: 'success',
+      title: '',
+      message: ''
+    });
+
+    // Dados do Formulário
+    const formData = reactive({
+      numero: '',
+      modelo: 'simples' as 'simples' | 'suíte',
+      capacidade: 2,
+      situacao: 'limpo' as 'limpo' | 'sujo' | 'manutenção'
+    });
+
+    onMounted(() => {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        isDarkMode.value = true;
+      } else if (savedTheme === 'light') {
+        isDarkMode.value = false;
+      } else {
+        isDarkMode.value = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+      toggleThemeDOM();
+    });
+
+    const toggleTheme = () => {
+      localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light');
+      toggleThemeDOM();
+    };
+
+    const toggleThemeDOM = () => {
+      const container = document.documentElement;
+      if (isDarkMode.value) {
+        container.setAttribute('data-bs-theme', 'dark');
+      } else {
+        container.setAttribute('data-bs-theme', 'light');
+      }
+    };
+
+    // Permite apenas letras e números, forçando maiúsculas
+    const handleNumeroInput = (event: Event) => {
+      const input = event.target as HTMLInputElement;
+      let filtered = input.value.replace(/[^a-zA-Z0-9]/g, '');
+      filtered = filtered.toUpperCase();
+      formData.numero = filtered;
+      input.value = filtered;
+    };
+
+    const closeAlert = () => {
+      alert.show = false;
+    };
+
+    const triggerAlert = (type: 'success' | 'danger' | 'warning', title: string, message: string) => {
+      alert.type = type;
+      alert.title = title;
+      alert.message = message;
+      alert.show = true;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const resetForm = () => {
+      formData.numero = '';
+      formData.modelo = 'simples';
+      formData.capacidade = 2;
+      formData.situacao = 'limpo';
+      closeAlert();
+    };
+
+    const handleSubmit = async () => {
+      closeAlert();
+
+      if (!formData.numero) {
+        triggerAlert('warning', 'Atenção:', 'O número do quarto é obrigatório.');
+        return;
+      }
+
+      if (formData.capacidade < 1) {
+        triggerAlert('warning', 'Atenção:', 'A capacidade deve ser no mínimo 1 hóspede.');
+        return;
+      }
+
+      isSubmitting.value = true;
+
+      try {
+        let response: ResponseFormat;
+
+        if ((window as any).api && (window as any).api.cadastrarQuarto) {
+          response = await (window as any).api.cadastrarQuarto({
+            numero: formData.numero,
+            modelo: formData.modelo,
+            capacidade: formData.capacidade,
+            situacao: formData.situacao
+          });
+        } else {
+          // Fallback para desenvolvimento local fora do Electron
+          console.log('Dados enviados ao backend:', formData);
+          await new Promise(resolve => setTimeout(resolve, 800));
+          response = { success: true, message: 'Quarto cadastrado com sucesso (Simulação Local).' };
+        }
+
+        if (response.success) {
+          triggerAlert('success', 'Sucesso!', response.message);
+          resetForm();
+        } else {
+          triggerAlert('danger', 'Erro no Cadastro:', response.message);
+        }
+      } catch (err: any) {
+        triggerAlert('danger', 'Erro crítico:', err.message || 'Não foi possível cadastrar o quarto.');
+      } finally {
+        isSubmitting.value = false;
+      }
+    };
+
+    return {
+      isDarkMode,
+      isSubmitting,
+      alert,
+      formData,
+      toggleTheme,
+      handleNumeroInput,
+      closeAlert,
+      resetForm,
+      handleSubmit
+    };
+  }
+});
+</script>
+
+<style scoped>
+.max-width-card {
+  max-width: 800px;
+}
+
+.transition-theme {
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+.theme-toggle-switch {
+  width: 3em !important;
+  height: 1.6em !important;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.card-glass {
+  background: var(--bs-card-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--bs-border-color-translucent);
+}
+
+.form-control:focus, .form-select:focus, .input-group-text:focus {
+  border-color: var(--bs-primary-border-subtle);
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+.input-group-text {
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.btn-scale {
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.btn-scale:active {
+  transform: scale(0.98);
+}
+</style>

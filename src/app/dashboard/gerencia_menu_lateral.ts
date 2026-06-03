@@ -4,7 +4,7 @@
  */
 
 export interface MenuLateralItem {
-  id: 'DASHBOARD' | 'CADASTRO_HOSPEDE' | 'CADASTRO_USUARIO' | 'CADASTRO_QUARTO';
+  id: 'DASHBOARD' | 'CADASTRO_HOSPEDE' | 'CADASTRO_USUARIO' | 'CADASTRO_QUARTO' | 'CADASTRO_CHECKIN';
   label: string;
   icon: string;
   perfisAutorizados: ('admin' | 'padrao')[];
@@ -34,6 +34,12 @@ export const MENU_ITEMS: MenuLateralItem[] = [
     id: 'CADASTRO_QUARTO',
     label: 'Cadastrar Quarto',
     icon: 'bi-door-open-fill',
+    perfisAutorizados: ['admin', 'padrao']
+  },
+  {
+    id: 'CADASTRO_CHECKIN',
+    label: 'Registrar Check-in',
+    icon: 'bi-box-arrow-in-right',
     perfisAutorizados: ['admin', 'padrao']
   }
 ];
